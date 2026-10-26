@@ -1,0 +1,22 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+reports/
+test.capture/
+test-captures/
+*.pcap
+*.pcapng
+*.cap
+.DS_Store
+
+# Local version backups
+traceforge_v*_backup.py
+
+# Local Python environments and build artifacts
+.venv/
+venv/
+build/
+dist/
+*.egg-info/
+.coverage
+htmlcov/

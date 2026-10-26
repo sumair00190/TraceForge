@@ -1,0 +1,196 @@
+name: TraceForge CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.10', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Unit tests
+        run: python -m unittest discover -s tests -q
+
+  capture-smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install TShark
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y tshark
+      - name: Install CLI
+        run: python -m pip install .
+      - name: Check stable candidate CLI versions
+        run: |
+          test "$(traceforge --version)" = "TraceForge 1.1.0"
+          test "$(traceforge-batch --version)" = "TraceForge Batch 1.1.0"
+      - name: Verify Apache-2.0 wheel metadata and attribution
+        run: |
+          python -m pip wheel --no-deps --wheel-dir dist .
+          python - <<'PY'
+          import zipfile
+          from pathlib import Path
+          wheels = list(Path('dist').glob('traceforge_forensics-*.whl'))
+          assert len(wheels) == 1
+          with zipfile.ZipFile(wheels[0]) as archive:
+              names = archive.namelist()
+              metadata_name = next(p for p in names if p.endswith('.dist-info/METADATA'))
+              metadata = archive.read(metadata_name).decode('utf-8')
+              assert 'License-Expression: Apache-2.0' in metadata
+              assert 'Version: 1.1.0' in metadata
+              license_file = next(p for p in names if p.endswith('/licenses/LICENSE'))
+              notice_file = next(p for p in names if p.endswith('/licenses/NOTICE'))
+              license_text = archive.read(license_file).decode('utf-8')
+              notice_text = archive.read(notice_file).decode('utf-8')
+              assert 'Version 2.0, January 2004' in license_text
+              assert 'END OF TERMS AND CONDITIONS' in license_text
+              assert 'Copyright 2026 sumair00190' in notice_text
+              for module in ('traceforge.py', 'traceforge_batch.py', 'traceforge_config.py'):
+                  assert module in names, module
+              print('Apache-2.0 metadata, LICENSE, NOTICE, and all CLI modules OK')
+          PY
+      - name: Generate demo PCAP
+        run: python scripts/generate_demo_capture.py --output demo/traceforge-demo.pcap
+      - name: Analyze synthetic capture
+        run: traceforge demo/traceforge-demo.pcap --output-dir reports --fingerprint
+      - name: Generate simulated investigation PCAP
+        run: python scripts/generate_demo_capture.py --scenario scan
+      - name: Analyze simulated investigation
+        run: traceforge demo/traceforge-scan-demo.pcap --output-dir reports
+      - name: Verify scan finding and evidence
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path('reports/traceforge-scan-demo-report.json').read_text())
+          assert report['total_packets'] == 18
+          assert report['ip_packets'] == 17
+          alerts = report['alerts']
+          assert len(alerts) == 1, alerts
+          assert alerts[0]['unique_destination_ports'] == 13
+          assert alerts[0]['syn_probes'] == 13
+          assert alerts[0]['sample_packet_numbers']
+          assert any(ev['event'] == 'tcp_syn_scan' or 'scan' in ev['event'] for ev in report['timeline'])
+          page = Path('reports/traceforge-scan-demo-report.html').read_text()
+          assert 'Investigation at a glance' in page
+          assert 'First sample frame: 5' in page
+          assert 'Supported heuristic review findings' in page
+          print('Synthetic investigation, analyst overview and evidence passed')
+          PY
+      - name: Generate and analyze PCAPNG/CAP capture formats
+        run: |
+          python scripts/generate_demo_capture.py --scenario scan --output demo/scan-compat.pcapng
+          python scripts/generate_demo_capture.py --scenario baseline --output demo/baseline.cap
+          traceforge demo/scan-compat.pcapng --output-dir reports
+          traceforge demo/baseline.cap --output-dir reports
+      - name: Compare capture format results
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          def read(name):
+              return json.loads(Path('reports', name + '-report.json').read_text())
+          pcap = read('traceforge-scan-demo')
+          pcapng = read('scan-compat')
+          cap = read('baseline')
+          assert pcap['total_packets'] == pcapng['total_packets'] == 18
+          assert pcap['ip_packets'] == pcapng['ip_packets'] == 17
+          assert pcap['capture_inventory']['primary_protocol_families'] == pcapng['capture_inventory']['primary_protocol_families']
+          assert len(pcapng['alerts']) == len(pcap['alerts']) == 1
+          assert pcapng['alerts'][0]['unique_destination_ports'] == 13
+          assert pcapng['alerts'][0]['sample_packet_numbers'] == pcap['alerts'][0]['sample_packet_numbers']
+          assert cap['total_packets'] == 6
+          assert cap['ip_packets'] == 5
+          assert not cap['alerts']
+          assert Path('reports/scan-compat-report.html').is_file()
+          assert Path('reports/baseline-report.html').is_file()
+          print('PCAP, PCAPNG, and CAP integration passed')
+          PY
+      - name: Analyze all demo capture formats in one batch
+        run: traceforge-batch demo --output-dir reports/batch --max-files 10 --fingerprint
+      - name: Verify batch summary and individual evidence
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          base = Path('reports/batch')
+          report = json.loads((base / 'batch-report.json').read_text())
+          assert report['files_discovered'] == 4, report
+          assert report['analyzed'] == 4
+          assert report['failed'] == 0
+          assert report['total_packets'] == 48
+          assert report['total_review_findings'] == 2
+          assert (base / 'batch-report.html').is_file()
+          for item in report['captures']:
+              assert item['status'] == 'ok'
+              assert (base / item['report_json']).is_file()
+              assert (base / item['report_html']).is_file()
+              capture = json.loads((base / item['report_json']).read_text())
+              assert capture['capture_provenance']['capture_sha256']
+          print('Batch TShark integration passed')
+          PY
+      - name: Verify configurable sensitivity with identical capture
+        run: |
+          traceforge demo/traceforge-scan-demo.pcap --profile conservative --output-dir reports/conservative
+          traceforge demo/traceforge-scan-demo.pcap --profile sensitive --output-dir reports/sensitive
+          traceforge demo/traceforge-scan-demo.pcap --config config/example.json --output-dir reports/config-example
+          traceforge demo/traceforge-scan-demo.pcap --config config/example.json --profile sensitive --output-dir reports/profile-override
+          traceforge-batch demo --config config/example.json --output-dir reports/batch-conservative
+      - name: Assert profile behavior and config precedence
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          def read(path):
+              return json.loads(Path(path).read_text())
+          def one(name):
+              return read('reports/' + name + '/traceforge-scan-demo-report.json')
+          assert len(one('conservative')['alerts']) == 0
+          assert len(one('sensitive')['alerts']) == 1
+          assert len(one('config-example')['alerts']) == 0
+          assert len(one('profile-override')['alerts']) == 1
+          assert one('sensitive')['detection_configuration']['scan_threshold_unique_ports'] == 5
+          assert one('config-example')['detection_configuration']['scan_threshold_unique_ports'] == 25
+          assert one('profile-override')['detection_configuration']['threshold_source'] == 'cli_profile'
+          batch = read('reports/batch-conservative/batch-report.json')
+          assert batch['files_discovered'] == 4
+          assert batch['total_review_findings'] == 0
+          assert batch['max_files'] == 10
+          assert batch['detection_configuration']['scan_threshold_unique_ports'] == 25
+          print('Configuration and SYN sensitivity profiles passed')
+          PY
+      - name: Check output
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r = json.loads(Path('reports/traceforge-demo-report.json').read_text())
+          assert r['total_packets'] == 6
+          assert r['ip_packets'] == 5
+          import hashlib
+          capture_bytes = Path('demo/traceforge-demo.pcap').read_bytes()
+          assert r['capture_provenance']['capture_sha256'] == hashlib.sha256(capture_bytes).hexdigest()
+          assert r['capture_provenance']['capture_bytes'] == len(capture_bytes)
+          html = Path('reports/traceforge-demo-report.html').read_text()
+          assert 'Capture provenance' in html
+          assert r['capture_provenance']['capture_sha256'] in html
+          assert sum(item['packets'] for item in r['capture_inventory']['primary_protocol_families']) == 6
+          print('Synthetic integration passed')
+          PY

@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "traceforge-forensics"
+version = "1.1.0"
+description = "Offline, evidence-led network investigation for PCAP/PCAPNG files"
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+requires-python = ">=3.10"
+keywords = ["network-forensics", "pcap", "tshark", "incident-response", "security"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Topic :: Security",
+]
+
+[project.scripts]
+traceforge = "traceforge:main"
+traceforge-batch = "traceforge_batch:main"
+
+[tool.setuptools]
+py-modules = ["traceforge", "traceforge_batch", "traceforge_config"]

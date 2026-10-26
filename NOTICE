@@ -1,0 +1,9 @@
+TraceForge — Offline Network Investigation
+Copyright 2026 sumair00190
+
+TraceForge is distributed under the Apache License, Version 2.0.
+See the LICENSE file for the complete terms.
+
+TShark / Wireshark is an external prerequisite and is not included in
+TraceForge's Python source distribution. Its licenses and notices
+remain those of its respective copyright holders.
