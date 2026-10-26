@@ -1,10 +1,10 @@
 # TraceForge v1.1.0 — Draft GitHub Release Notes
 
-**Status: DRAFT.** Do not publish before final approval. The repository remains private, the annotated source tag `v1.1.0` exists, and the separate GitHub Release page has **not** been created. Tagged `v1.0` is unchanged.
+**Status: DRAFT.** Fresh repository remains private; release tagging and publication are pending.
 
 TraceForge is an offline Python/TShark network-forensics triage utility for authorized PCAP, PCAPNG and CAP captures. It produces evidence-backed investigation leads with standalone HTML and JSON reports. It is not a universal intrusion detection system.
 
-## What's new since v1.0
+## Included capabilities
 
 - Installable `traceforge` and `traceforge-batch` CLI commands for single-file and multi-capture investigations.
 - Deterministic synthetic PCAP and PCAPNG examples, including an intentionally simulated 13-port SYN scan candidate with supporting Wireshark frame references.
@@ -37,8 +37,8 @@ xdg-open reports/batch/batch-report.html
 
 ## Validation and caveats
 
-- **85 Python tests passed on tagged v1.1.0 in Kali**; GitHub Actions passed on Python 3.10/3.13 with synthetic TShark, package licensing and version checks.
-- **Tagged v1.1.0 validated on Kali:** both CLIs reported version 1.1.0, and the synthetic 18-packet PCAPNG produced one evidence-backed SYN review finding. Public-launch privacy review, screenshots and explicit publication approval remain outstanding.
+- 85 Python unit tests passed on Kali using the launch source.
+- Synthetic scan, DNS/ICMP, TLS/HTTP and PsExec training captures processed successfully. See VALIDATION.md for results and limitations; check Actions separately for current CI status.
 - Synthetic findings do not establish detection accuracy on real-world malicious or benign traffic.
 - Encrypted application content, unsupported protocols, truncated captures, missing packets and TShark limitations can cause missed or ambiguous results.
 - Output IP addresses, timestamps, evidence frames and capture metadata may be sensitive. Review all reports before sharing.

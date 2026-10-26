@@ -4,7 +4,7 @@
 
 TraceForge is a read-only Python/TShark tool for reviewing **authorized** `.pcap` and `.pcapng` files. It creates a standalone HTML investigation report, structured JSON findings, and a concise CLI summary.
 
-> **Release status:** Source version **v1.1.0 is now tagged** (private repository), with **85/85 Python tests verified on Kali** and successful GitHub Actions checks on Python 3.10/3.13 and TShark synthetic captures. **A separate v1.1 GitHub Release page has not been published.** The existing `v1.0` GitHub release remains unchanged. TraceForge is analyst-assistance software, **not a validated IDS or a universal attack detector**; every lead needs Wireshark validation.
+> **Release status:** TraceForge v1.1.0 is being prepared for publication. On Kali, 85 unit tests and four capture runs completed successfully. See [validation evidence](docs/VALIDATION.md) and [current CI](https://github.com/sumair00190/TraceForge/actions). Findings require analyst validation.
 
 ## Investigation preview (synthetic demo)
 
@@ -57,7 +57,7 @@ These are *heuristic observations*, **not confirmed attacks**. Encrypted applica
 
 ## Installable CLI, automated testing and offline demo
 
-The repository has the annotated source tag **`v1.1.0`**, but no separate v1.1 GitHub Release or PyPI publication has been created. The existing [`v1.0`](https://github.com/sumair00190/TraceForge/releases/tag/v1.0) tag stays unchanged. The repository remains private until the owner explicitly chooses to make it public.
+This fresh repository contains the v1.1.0 source. Release tagging and the GitHub Release page are pending. No PyPI publication is claimed.
 
 For an installable command and a safe, reproducible six-packet demo:
 
@@ -214,6 +214,6 @@ The HTML dashboard should show **Capture-wide Protocol Landscape** even when all
 - [Community standards](CODE_OF_CONDUCT.md) — respectful technical collaboration
 - [Open-source readiness checklist](docs/OPEN_SOURCE_RELEASE_CHECKLIST.md) — release requirements and open items
 
-**Pre-launch status:** This GitHub repository remains **private**. The `v1.1.0` source tag exists, but the separate GitHub Release has not been created; the project is not public. The earlier `v1.0` tag predates the Apache-2.0 files and is unchanged; consult the license in each revision.
+**Pre-launch status:** This repository remains private. Historical development tags and releases are not included in its fresh Git history.
 
 Built as a cybersecurity learning and defensive research project. Use only captures you have permission to analyze.
