@@ -4,7 +4,7 @@
 
 TraceForge is a read-only Python/TShark tool for reviewing **authorized** `.pcap` and `.pcapng` files. It creates a standalone HTML investigation report, structured JSON findings, and a concise CLI summary.
 
-> **Release status:** TraceForge v1.1.0 is being prepared for publication. On Kali, 85 unit tests and four capture runs completed successfully. See [validation evidence](docs/VALIDATION.md) and [current CI](https://github.com/sumair00190/TraceForge/actions). Findings require analyst validation.
+> **Release status:** TraceForge v1.1.0 is now publicly available. On Kali, 85 unit tests and four capture runs completed successfully. See [validation evidence](docs/VALIDATION.md) and [current CI](https://github.com/sumair00190/TraceForge/actions). Findings require analyst validation.
 
 ## Investigation preview (synthetic demo)
 
@@ -57,7 +57,7 @@ These are *heuristic observations*, **not confirmed attacks**. Encrypted applica
 
 ## Installable CLI, automated testing and offline demo
 
-This fresh repository contains the v1.1.0 source. Release tagging and the GitHub Release page are pending. No PyPI publication is claimed.
+The v1.1.0 source and [GitHub Release](https://github.com/sumair00190/TraceForge/releases/tag/v1.1.0) are available. No PyPI publication is claimed.
 
 For an installable command and a safe, reproducible six-packet demo:
 
@@ -214,6 +214,6 @@ The HTML dashboard should show **Capture-wide Protocol Landscape** even when all
 - [Community standards](CODE_OF_CONDUCT.md) — respectful technical collaboration
 - [Open-source readiness checklist](docs/OPEN_SOURCE_RELEASE_CHECKLIST.md) — release requirements and open items
 
-**Pre-launch status:** This repository remains private. Historical development tags and releases are not included in its fresh Git history.
+**Public release:** TraceForge v1.1.0 is available under Apache-2.0. Historical development tags and releases are not included in this repository.
 
 Built as a cybersecurity learning and defensive research project. Use only captures you have permission to analyze.
